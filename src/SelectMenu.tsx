@@ -1,16 +1,13 @@
+"use client";
+import styles from "./Select.module.css";
+import { useMemo, useState } from "react";
 import { skillsArray } from "./skills";
-import "./Select.css";
-import { useEffect, useMemo, useState } from "react";
 
 const SelectMenu = () => {
-  const [skills, setSkills] = useState<string[]>([]);
+  const [skills] = useState<string[]>(skillsArray);
   const [query, setQuery] = useState<string>("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  useEffect(() => {
-    setSkills(skillsArray);
-  }, []);
 
   const filteredSkills = useMemo(() => {
     if (!query) return skills;
@@ -19,88 +16,113 @@ const SelectMenu = () => {
     });
   }, [query, skills]);
 
+  const props = {
+    filteredSkills,
+    isOpen,
+    selectedSkills,
+    setSelectedSkills,
+    setIsOpen,
+    setQuery,
+    query,
+  };
+
   return (
-    <div
-      onBlur={() => {
-        setIsOpen(false);
-      }}
-      className="select-menu-container"
-    >
-      {selectedSkills.length > 0 && (
-        <div className="selected-skills-bar">
-          {selectedSkills.map((selectedSkill) => (
-            <span
-              onClick={() => {
-                setSelectedSkills(
-                  selectedSkills.filter((skill) => skill !== selectedSkill)
-                );
-              }}
-              className="selected-skill"
-            >
-              {selectedSkill} &times;
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="input-bar-container">
-        <input
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setIsOpen(true);
-          }}
-          className="select-input"
-          type="text"
-          placeholder="Select skills"
-          value={query}
-          required
-        />
-        <span
-          onClick={() => {
-            setIsOpen(!isOpen);
-          }}
-          className="arrow-button"
-        >
-          &darr;
-        </span>
+    <div className={`${styles.container}`}>
+      {selectedSkills.length > 0 && <SelectedSkillsMenu props={props} />}
+      <div className={styles.input_bar_container}>
+        <SelectInput props={props} />
       </div>
-      {query ||
-        (isOpen && (
-          <ul
-            tabIndex={0}
-            onClick={(event) => {
-              const selectedSkill = event.target as HTMLLIElement;
-              if (selectedSkill.tagName === "LI") {
-                const skill = selectedSkill.getAttribute("value");
-                if (skill) {
-                  if (!selectedSkills.includes(skill)) {
-                    setSelectedSkills([...selectedSkills, skill]);
-                  }
-                }
-              }
-            }}
-            className={isOpen ? "select-list visible" : "select-list"}
-          >
-            {filteredSkills && filteredSkills.length > 0 ? (
-              filteredSkills.map((skill: string, index: number) => (
-                <li
-                  onClick={() => {
-                    setIsOpen(false);
-                    setQuery("");
-                  }}
-                  className="list-item"
-                  key={index}
-                  value={skill}
-                >
-                  {skill}
-                </li>
-              ))
-            ) : (
-              <li>No Results Found</li>
-            )}
-          </ul>
-        ))}
+      {isOpen && <SelectList props={props} />}
     </div>
   );
 };
+
+const SelectedSkillsMenu = ({ props }: Props) => {
+  return (
+    <div className={styles.selected_skills_bar}>
+      {props.selectedSkills.map((selectedSkill, index: number) => (
+        <span
+          key={index}
+          onClick={() => {
+            props.setSelectedSkills(
+              props.selectedSkills.filter((skill) => skill !== selectedSkill)
+            );
+          }}
+          className={styles.selected_skill}
+        >
+          {selectedSkill} &times;
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const SelectInput = ({ props }: Props) => {
+  return (
+    <>
+      <input
+        onChange={(event) => {
+          props.setQuery(event.target.value);
+          props.setIsOpen(true);
+        }}
+        className={styles.select_input}
+        type="text"
+        placeholder="Select skills"
+        value={props.query}
+      />
+      <span
+        onClick={() => {
+          props.setIsOpen(!props.isOpen);
+        }}
+        className={styles.select_icon}
+      >
+        Open
+      </span>
+    </>
+  );
+};
+
+const SelectList = ({ props }: Props) => {
+  return (
+    <ul
+      className={`${styles.select_list} ${props.isOpen ? styles.visible : ""}`}
+    >
+      {props.filteredSkills.length > 0 ? (
+        props.filteredSkills.map((skill: string, index: number) => (
+          <li
+            onClick={(event) => {
+              event.stopPropagation();
+              const skill = event.currentTarget.getAttribute("value");
+              if (skill && !props.selectedSkills.includes(skill)) {
+                props.setSelectedSkills([...props.selectedSkills, skill]);
+              }
+              props.setIsOpen(false);
+              props.setQuery("");
+            }}
+            className={styles.list_item}
+            key={index}
+            value={skill}
+          >
+            {skill}
+          </li>
+        ))
+      ) : (
+        <li>No Results Found</li>
+      )}
+    </ul>
+  );
+};
+
+interface Props {
+  props: {
+    filteredSkills: string[];
+    isOpen: boolean;
+    selectedSkills: string[];
+    query: string;
+    setSelectedSkills: (skills: string[]) => void;
+    setIsOpen: (isOpen: boolean) => void;
+    setQuery: (query: string) => void;
+  };
+}
 
 export default SelectMenu;

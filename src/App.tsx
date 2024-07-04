@@ -1,8 +1,8 @@
 import "./App.css";
-import ProfileCreation from "./ProfileCreation";
+import SelectMenu from "./SelectMenu";
 
 function App() {
-  return <ProfileCreation />;
+  return <SelectMenu />;
 }
 
 export default App;
